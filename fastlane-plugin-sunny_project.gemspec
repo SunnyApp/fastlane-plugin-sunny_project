@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.email         = 'smartytime@gmail.com'
 
   spec.summary       = 'Sunny flutter projects'
-  # spec.homepage      = "https://github.com/<GITHUB_USERNAME>/fastlane-plugin-sunny_project"
+  spec.homepage      = "https://github.com/SunnyApp/fastlane-plugin-sunny_project"
   spec.license       = "MIT"
 
   spec.files         = Dir["lib/**/*"] + %w(README.md LICENSE)
