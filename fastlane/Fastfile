@@ -59,27 +59,6 @@ lane :publish do |options|
 end
 
 
-### Reads the latest version from pubspec.yaml
-def current_semver()
-  Semantic::Version.new current_version
-end
-
-### Reads the latest version from pubspec.yaml (doesn't have to be in .. to run)
-def current_semver_path()
-  version = nil
-  Dir.chdir("..") {
-    version=current_semver
-  }
-  version
-end
-
-def build_number()
-  current_semver.build
-end
-
-def release_notes_file
-  ".release-notes"
-end
 
 def release_notes(changes)
   unless changes
@@ -109,28 +88,6 @@ def release_notes(changes)
   changes
 end
 
-lane :increase_version do |options|
-  version=nil
-
-  Dir.chdir("..") {
-    if options[:patch]
-      cmd("bump patch", "pubver bump patch -b")
-      version=current_semver
-    end
-    if options[:build]
-      cmd("bump build", "pubver bump build")
-      version=current_semver
-    end
-    if version
-      puts(version)
-    else
-      puts("No version changes occurred")
-      next
-    end
-  }
-
-  version
-end
 
 def cmd(name, *command, **args)
   if (command.count > 1)
