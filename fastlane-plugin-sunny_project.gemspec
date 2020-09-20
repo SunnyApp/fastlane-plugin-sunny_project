@@ -9,11 +9,9 @@ Gem::Specification.new do |spec|
   spec.version       = Fastlane::SunnyProject::VERSION
   spec.author        = 'ericmartineau'
   spec.email         = 'smartytime@gmail.com'
-
   spec.summary       = 'Sunny flutter projects'
   spec.homepage      = "https://github.com/SunnyApp/fastlane-plugin-sunny_project"
   spec.license       = "MIT"
-
   spec.files         = Dir["lib/**/*"] + %w(README.md LICENSE)
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']

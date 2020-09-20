@@ -4,13 +4,13 @@ require 'semantic'
 
 module Fastlane
   module Actions
-    class IncreaseVersionAction < Action
+    class PubPublishAction < Action
       def self.run(options)
-        Sunny.do_increase_version options
+        Sunny.exec_cmd("pub publish", "pub publish -f")
       end
 
       def self.description
-        "Increment version number in pubspec.yaml file"
+        "Executes pub publish command"
       end
 
       def self.authors
@@ -27,17 +27,9 @@ module Fastlane
       end
 
       def self.available_options
-        verify_type = lambda do |value|
-          UI.error "Invalid option: #{value} Must be 'build' or 'patch'" unless value == "build" or value == "patch"
-        end
+
         [
-            FastlaneCore::ConfigItem.new(key: :type,
-                                         env_name: "SUNNY_PROJECT_TYPE",
-                                         description: "Whether to make a patch or build version change",
-                                         optional: true,
-                                         verify_block: verify_type,
-                                         default_value: 'build',
-                                         type: String)
+
         ]
       end
 
