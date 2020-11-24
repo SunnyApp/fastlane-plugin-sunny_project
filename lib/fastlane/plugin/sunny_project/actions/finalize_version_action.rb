@@ -10,13 +10,13 @@ module Fastlane
         # process fails, we should revert this because it will mess up our commit logs
         Fastlane::Actions::GitCommitAction.run(path: %w[./pubspec.yaml ./pubspec.lock ./CHANGELOG.md],
                                                allow_nothing_to_commit: true,
-                   message: "Version bump to: #{version.major}.#{version.minor}.#{version.patch}#800#{version.build}")
+                                               message: "Version bump to: #{version.major}.#{version.minor}.#{version.patch}#800#{version.build}")
         Fastlane::Actions::AddGitTagAction.run(
             tag: "sunny/builds/v#{version.build}",
             force: true,
             sign: false,
         )
-        Fastlane::Actions::PushGitTagsAction.run(log:true)
+        Fastlane::Actions::PushGitTagsAction.run(log: true)
         if File.exist?(Sunny.release_notes_file)
           File.delete(Sunny.release_notes_file)
         end
@@ -60,7 +60,5 @@ module Fastlane
         true
       end
     end
-
-
   end
 end

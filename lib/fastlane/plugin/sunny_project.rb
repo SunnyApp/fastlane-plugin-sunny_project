@@ -1,4 +1,4 @@
-require 'fastlane/plugin/sunny_project/version'
+require_relative 'sunny_project/version'
 
 module Fastlane
   module SunnyProject

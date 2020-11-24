@@ -28,7 +28,7 @@ module Fastlane
             ))
 
             if Sunny.blank(changes)
-              changes = Sunny.string(prompt(
+              changes = Sunny.string(Fastlane::Actions::PromptAction.run(
                   text: "Please Enter a description of what changed.\nWhen you are finished, type END\n Changelog: ",
                   multi_line_end_keyword: 'END'))
             end

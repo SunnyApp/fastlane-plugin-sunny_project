@@ -1,4 +1,3 @@
-
 require 'fastlane/action'
 require_relative '../helper/sunny_project_helper'
 require 'semantic'
