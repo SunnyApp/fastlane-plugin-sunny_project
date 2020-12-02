@@ -4,6 +4,7 @@ gemspec
 # require 'semantic'
 # require 'semantic/core_ext'
 require 'fastlane'
+gem 'yaml_normalizer'
 # require 'fileutils'
 # require 'open3'
 
