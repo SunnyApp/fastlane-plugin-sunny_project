@@ -4,7 +4,7 @@ require 'fastlane/action'
 require_relative '../helper/sunny_project_helper'
 require 'semantic'
 require 'yaml'
-require 'yaml_normalizer'
+
 require_relative '../helper/plugin_options'
 
 def resort_keys(input)
@@ -96,8 +96,6 @@ module Fastlane
         emitter.accept(pyaml.tree)
         final_pubspec=n.string.gsub("---", "")
         File.write('pubspec.yaml', final_pubspec)
-        # normalize = YamlNormalizer::Services::Normalize.new('pubspec.yaml')
-        # normalize.call
         print(final_pubspec)
       end
 
