@@ -3,6 +3,9 @@ source('https://rubygems.org')
 gemspec
 # require 'semantic'
 # require 'semantic/core_ext'
+#gem 'fastlane'
+gem 'fastlane-plugin-firebase_app_distribution'
+gem 'ci'
 require 'fastlane'
 # require 'fileutils'
 # require 'open3'

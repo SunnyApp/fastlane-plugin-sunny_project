@@ -8,53 +8,7 @@ module Fastlane
 
     class ReleaseNotesAction < Action
       def self.run(options)
-        changes = Sunny.string(options[:changes])
-        if Sunny.blank(changes)
-          if File.file?(Sunny.release_notes_file)
-            changes = Sunny.string(File.read(Sunny.release_notes_file))
 
-            UI.message "Found release notes: \n#####################################################\n\n#{changes}\n\n#####################################################\n"
-            sleep(5)
-            return changes
-          end
-          unless File.file?(Sunny.release_notes_file)
-            changes =  Sunny.string(Fastlane::Actions::ChangelogFromGitCommitsAction.run(
-                path: "./",
-                pretty: "%B",
-                ancestry_path: false,
-                match_lightweight_tag: true,
-                quiet: false,
-                merge_commit_filtering: ":exclude_merges"
-            ))
-
-            if Sunny.blank(changes)
-              changes = Sunny.string(Fastlane::Actions::PromptAction.run(
-                  text: "Please Enter a description of what changed.\nWhen you are finished, type END\n Changelog: ",
-                  multi_line_end_keyword: 'END'))
-            end
-          end
-          unless Sunny.blank(changes)
-            File.open(Sunny.release_notes_file, 'w') { |file|
-              file.write(changes)
-            }
-          end
-          if File.file?(Sunny.release_notes_file)
-            changes = Sunny.string(File.read(Sunny.release_notes_file))
-          end
-        end
-
-        if File.file?("CHANGELOG.md")
-          f = File.open("CHANGELOG.md", "r+")
-          lines = f.readlines
-          f.close
-          v = Sunny.current_semver
-          lines = ["## [#{v}]\n", " * #{changes}\n", "\n"] + lines
-
-          output = File.new("CHANGELOG.md", "w")
-          lines.each { |line| output.write line }
-          output.close
-        end
-        changes
       end
 
       def self.description
