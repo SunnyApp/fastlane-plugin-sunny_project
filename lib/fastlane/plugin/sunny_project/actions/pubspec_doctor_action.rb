@@ -48,10 +48,9 @@ module Fastlane
         dependency_overrides = pubspec["dependency_overrides"]
 
         plugins.keys.each do |key|
-          info = plugins[key]
-          if info.nil? or info == ''
-            info = key
-          end
+
+          info = plugins[key] ? plugins[key] : key
+
           folder = key
           branch = nil
           path = nil
