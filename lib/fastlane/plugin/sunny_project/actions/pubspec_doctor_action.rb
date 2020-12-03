@@ -8,14 +8,14 @@ require 'yaml'
 require_relative '../helper/plugin_options'
 
 def resort_keys(input)
-  resort={}
-  keys=[]
+  resort = {}
+  keys = []
   input.each_key do |key|
     puts("Key #{key} #{key.class}")
     keys.push("#{key}")
   end
 
-  keys=keys.sort
+  keys = keys.sort
   puts("Sorted keys: #{keys}")
   keys.each do |k|
     resort[k] = input[k]
@@ -49,7 +49,7 @@ module Fastlane
 
         plugins.keys.each do |key|
           info = plugins[key]
-          if info.empty?
+          if info.nil? or info == ''
             info = key
           end
           folder = key
@@ -91,10 +91,10 @@ module Fastlane
 
         pyaml = Psych::Visitors::YAMLTree.create
         pyaml << pubspec
-        n=StringIO.new
+        n = StringIO.new
         emitter = CustomVisitor.new(n)
         emitter.accept(pyaml.tree)
-        final_pubspec=n.string.gsub("---", "")
+        final_pubspec = n.string.gsub("---", "")
         File.write('pubspec.yaml', final_pubspec)
         print(final_pubspec)
       end
@@ -136,7 +136,7 @@ module Fastlane
 
       def visit_Psych_Nodes_Scalar(o)
         if o.value.is_a? String
-          str="#{o.value}"
+          str = "#{o.value}"
           if str.start_with?('^') || str.start_with?('..')
             @handler.scalar o.value, o.anchor, o.tag, o.plain, o.quoted, 1
           elsif str.start_with?('https://') || str.start_with?('git@')
@@ -149,7 +149,6 @@ module Fastlane
         @handler.scalar o.value, o.anchor, o.tag, o.plain, o.quoted, o.style
       end
     end
-
 
   end
 end
