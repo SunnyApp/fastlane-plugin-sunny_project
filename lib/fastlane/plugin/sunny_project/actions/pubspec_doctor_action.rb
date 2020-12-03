@@ -49,6 +49,9 @@ module Fastlane
 
         plugins.keys.each do |key|
           info = plugins[key]
+          if info == nil
+            info = key
+          end
           folder = key
           branch = nil
           path = nil
