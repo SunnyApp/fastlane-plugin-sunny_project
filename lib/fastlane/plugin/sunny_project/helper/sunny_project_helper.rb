@@ -29,7 +29,6 @@ module Fastlane
       action.run(self.config(action.available_options, options))
     end
 
-
     def self.do_increase_version(options)
       command = "pubver #{options[:type]} "
       if options[:type] == 'patch'
@@ -81,7 +80,7 @@ module Fastlane
           return changes
         end
         unless File.file?(Sunny.release_notes_file)
-          changes =  Sunny.string(Fastlane::Actions::ChangelogFromGitCommitsAction.run(
+          changes = Sunny.string(Fastlane::Actions::ChangelogFromGitCommitsAction.run(
             path: "./",
             pretty: "%B",
             ancestry_path: false,
@@ -130,22 +129,20 @@ module Fastlane
         UI.user_error! "No version parameter found"
         return
       end
-      cmd("set_version", "pubver set #{semver}")
-      sync_version_number(semver)
+      self.exec_cmd("set_version", "pubver set #{semver}", quiet: true)
+      self.sync_version_number(semver)
     end
 
     def self.sync_version_number(version)
-      Dir.chdir("../ios") {
-        if version
-          ## This will update the xcode version number
-          Fastlane::Actions::IncrementVersionNumberAction(
-            version_number: "#{version.major}.#{version.minor}.#{version.patch}",
-            xcodeproj: "ios/Runner.xcodeproj"
-          )
-        else
-          UI.user_error! "No version found"
-        end
-      }
+      if version
+        self.run_action(Fastlane::Actions::IncrementVersionNumberAction,
+                        version_number: "#{version.major}.#{version.minor}.#{version.patch}",
+                        xcodeproj: "ios/Runner.xcodeproj"
+        )
+      else
+        UI.user_error! "No version found"
+      end
+
     end
 
     def self.build_ios(build_num, **options)
@@ -168,7 +165,7 @@ module Fastlane
 
     ## Retrieves the current semver based on git tags
     def self.current_version_string
-      self.exec_cmd("get version", "pubver get", quiet:true)
+      self.exec_cmd("get version", "pubver get", quiet: true)
     end
 
     # lane :ximg do |options|
@@ -197,10 +194,10 @@ module Fastlane
 
     def self.underscore(str)
       str.gsub(/::/, '/').
-          gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2').
-          gsub(/([a-z\d])([A-Z])/, '\1_\2').
-          tr("-", "_").
-          downcase
+        gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2').
+        gsub(/([a-z\d])([A-Z])/, '\1_\2').
+        tr("-", "_").
+        downcase
     end
   end
 end

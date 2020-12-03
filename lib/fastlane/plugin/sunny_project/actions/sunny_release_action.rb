@@ -29,6 +29,7 @@ module Fastlane
           Sunny.run_action(EnsureGitStatusCleanAction)
         end
 
+
         sunny_file = Sunny.config(SunnyProject::Options.available_options, {})
         sunny_file.load_configuration_file("Sunnyfile")
 
@@ -71,7 +72,7 @@ module Fastlane
               UI.important "Skipping Flutter Build"
             else
               UI.header "Run Flutter Build"
-              Sunny.build_ios(build_number, options)
+              Sunny.build_ios(build_number)
             end
             require 'match'
             build_opts = options[:build_options]
@@ -108,10 +109,10 @@ module Fastlane
 
           end
         rescue StandardError => e
-          UI.user_error!(">> build ios failed << \n  #{e}", {})
           # Put the version back like it was
           UI.important("Restoring old version: #{old_version}")
           Sunny.override_version(version: old_version)
+          UI.user_error!(">> build ios failed #{e} << \n  #{e.backtrace.join("\n")}")
           return
         end
 
@@ -240,8 +241,8 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :skip_flutter_build,
                                        env_name: "SKIP FLUTTER BUILD",
-                                       description: "Where we're releasing to",
-                                       optional: false,
+                                       description: "Skip the initial flutter build",
+                                       optional: true,
                                        type: Object),
           FastlaneCore::ConfigItem.new(key: :verbose,
                                        env_name: "SUNNY_VERBOSE",
