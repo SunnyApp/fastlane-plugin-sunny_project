@@ -49,7 +49,7 @@ module Fastlane
 
         plugins.keys.each do |key|
 
-          info = plugins[key] ? plugins[key] : key
+          info = plugins[key] ? plugins[key] : "#{key}"
 
           folder = key
           branch = nil
