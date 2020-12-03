@@ -49,7 +49,7 @@ module Fastlane
 
         plugins.keys.each do |key|
           info = plugins[key]
-          if info == nil
+          if info.empty?
             info = key
           end
           folder = key
