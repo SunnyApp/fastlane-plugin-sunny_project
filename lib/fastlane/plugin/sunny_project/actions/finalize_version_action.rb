@@ -16,7 +16,7 @@ module Fastlane
                          force: true,
                          sign: false,
         )
-        Sunny.run_action(PushGitTagsAction, log: true)
+        Sunny.run_action(PushGitTagsAction, force: true)
         if File.exist?(Sunny.release_notes_file)
           File.delete(Sunny.release_notes_file)
         end
