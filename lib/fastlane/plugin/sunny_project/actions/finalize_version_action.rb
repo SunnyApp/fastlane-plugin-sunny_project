@@ -8,15 +8,15 @@ module Fastlane
         version = Sunny.current_semver
         # If we got this far, let's commit the build number and update the git tags.  If the rest of the pro
         # process fails, we should revert this because it will mess up our commit logs
-        Fastlane::Actions::GitCommitAction.run(path: %w[./pubspec.yaml ./pubspec.lock ./CHANGELOG.md],
-                                               allow_nothing_to_commit: true,
-                                               message: "Version bump to: #{version.major}.#{version.minor}.#{version.patch}#800#{version.build}")
-        Fastlane::Actions::AddGitTagAction.run(
-            tag: "sunny/builds/v#{version.build}",
-            force: true,
-            sign: false,
+        Sunny.run_action(GitCommitAction, path: %w[./pubspec.yaml ./pubspec.lock ./CHANGELOG.md],
+                         allow_nothing_to_commit: true,
+                         message: "Version bump to: #{version.major}.#{version.minor}.#{version.patch}#800#{version.build}")
+        Sunny.run_action(AddGitTagAction,
+                         tag: "sunny/builds/v#{version.build}",
+                         force: true,
+                         sign: false,
         )
-        Fastlane::Actions::PushGitTagsAction.run(log: true)
+        Sunny.run_action(PushGitTagsAction, log: true)
         if File.exist?(Sunny.release_notes_file)
           File.delete(Sunny.release_notes_file)
         end
@@ -41,13 +41,12 @@ module Fastlane
 
       def self.available_options
         [
-            FastlaneCore::ConfigItem.new(key: :tag_group,
-                                         env_name: "SUNNY_PROJECT_TAG_GROUP",
-                                         description: "The name of the tag group",
-                                         optional: false,
-                                         type: String,
-                                         default_value: "sunny/builds"),
-
+          FastlaneCore::ConfigItem.new(key: :tag_group,
+                                       env_name: "SUNNY_PROJECT_TAG_GROUP",
+                                       description: "The name of the tag group",
+                                       optional: false,
+                                       type: String,
+                                       default_value: "sunny/builds"),
 
         ]
       end

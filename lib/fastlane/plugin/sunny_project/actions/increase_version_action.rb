@@ -31,13 +31,13 @@ module Fastlane
           UI.error "Invalid option: #{value} Must be 'build' or 'patch'" unless value == "build" or value == "patch"
         end
         [
-            FastlaneCore::ConfigItem.new(key: :type,
-                                         env_name: "SUNNY_PROJECT_TYPE",
-                                         description: "Whether to make a patch or build version change",
-                                         optional: true,
-                                         verify_block: verify_type,
-                                         default_value: 'build',
-                                         type: String)
+          FastlaneCore::ConfigItem.new(key: :type,
+                                       env_name: "SUNNY_PROJECT_TYPE",
+                                       description: "Whether to make a patch or build version change",
+                                       optional: true,
+                                       verify_block: verify_type,
+                                       default_value: 'build',
+                                       type: String)
         ]
       end
 

@@ -128,8 +128,10 @@ module Fastlane
           UI.header "Commit pubspec.yaml, Info.plist for version updates"
           # If we got this far, let's commit the build number and update the git tags.  If the rest of the pro
           # process fails, we should revert this because it will mess up our commit logs
-          Sunny.run_action(GitCommitAction, path: %w[./pubspec.yaml ./pubspec.lock ./Gemfile.lock ./ios/Runner/Info.plist],
-                           message: "Version bump to: #{version.major}.#{version.minor}.#{version.patch}#800#{version.build}")
+          Sunny.run_action(GitCommitAction,
+                           allow_nothing_to_commit: true,
+                           path: %w[./pubspec.yaml ./pubspec.lock ./Gemfile.lock ./ios/Runner/Info.plist],
+                           message: "\"Version bump to: #{version.major}.#{version.minor}.#{version.patch}#800#{version.build}\"")
           UI.header "Tagging repo v#{version.build}"
           Sunny.run_action(AddGitTagAction,
                            grouping: "sunny-builds",

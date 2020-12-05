@@ -30,7 +30,7 @@ module Fastlane
     end
 
     def self.do_increase_version(options)
-      command = "pubver #{options[:type]} "
+      command = "pubver bump #{options[:type]} "
       if options[:type] == 'patch'
         command += "-b"
       end
