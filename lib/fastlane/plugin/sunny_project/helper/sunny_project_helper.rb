@@ -21,6 +21,20 @@ module Fastlane
       end
     end
 
+    def self.is_clean
+      self.run_action(Fastlane::Actions::EnsureGitStatusCleanAction)
+      true
+    rescue
+      false
+    end
+
+    def self.is_branch(branch_name)
+      self.run_action(Fastlane::Actions::EnsureGitBranchAction, branch: branch_name)
+      true
+    rescue
+      false
+    end
+
     def self.config(available_options, options)
       FastlaneCore::Configuration.create(available_options, options)
     end
@@ -30,8 +44,10 @@ module Fastlane
     end
 
     def self.do_increase_version(options)
-      command = "pubver bump #{options[:type]} "
-      if options[:type] == 'patch'
+      bump_type = options[:type]
+      bump_type = "build" unless bump_type
+      command = "pubver bump #{bump_type}"
+      if bump_type == 'patch'
         command += "-b"
       end
       self.exec_cmd("bump patch", command)

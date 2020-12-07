@@ -13,7 +13,6 @@
 
 fastlane_require 'semantic'
 fastlane_require 'semantic/core_ext'
-require 'fastlane'
 fastlane_require 'fileutils'
 fastlane_require 'open3'
 

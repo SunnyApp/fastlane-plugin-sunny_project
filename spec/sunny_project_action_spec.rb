@@ -1,9 +1,7 @@
-describe Fastlane::Actions::SunnyProjectAction do
+describe Fastlane::Actions::LocalPackagesAction do
   describe '#run' do
     it 'prints a message' do
-      expect(Fastlane::UI).to receive(:message).with("The sunny_project plugin is working!")
-
-      Fastlane::Actions::SunnyProjectAction.run(nil)
+      Fastlane::Actions::LocalPackagesAction.run(nil)
     end
   end
 end

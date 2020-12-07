@@ -29,7 +29,6 @@ module Fastlane
           Sunny.run_action(EnsureGitStatusCleanAction)
         end
 
-
         sunny_file = Sunny.config(SunnyProject::Options.available_options, {})
         sunny_file.load_configuration_file("Sunnyfile")
 
@@ -45,9 +44,9 @@ module Fastlane
         # version numbers.
         if options[:build] and not options[:no_bump]
           if options[:release]
-            build_number = Sunny.do_increase_version(build: true, patch: true)
+            build_number = Sunny.do_increase_version(type: "build", patch: true)
           else
-            build_number = Sunny.do_increase_version(build: true)
+            build_number = Sunny.do_increase_version(type: "build")
           end
 
           unless build_number
