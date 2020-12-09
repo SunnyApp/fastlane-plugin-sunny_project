@@ -47,34 +47,39 @@ module Fastlane
       bump_type = options[:type]
       bump_type = "build" unless bump_type
       command = "pubver bump #{bump_type}"
-      if bump_type == 'patch'
-        command += "-b"
+      unless bump_type.eql?('build')
+        command += " -b"
       end
-      self.exec_cmd("bump patch", command)
+      self.exec_cmd(command.to_s, command)
+
+      unless bump_type.eql?('build')
+        self.exec_cmd("also bump build", "pubver bump build")
+      end
+
       self.current_semver
     end
 
     def self.exec_cmd(name, *command, **args)
       if (command.count > 1)
-        command = command.map { |item| Shellwords.escape item }
+        command = command.map { |item| Shellwords.escape(item) }
       end
       joined = command.join(" ")
       if args[:verbose]
         begin
           return sh(command)
         rescue StandardError => e
-          UI.user_error! ">> #{name} failed << \n  #{e}"
+          UI.user_error!(">> #{name} failed << \n  #{e}")
         end
       else
         if args[:cmd_out]
-          UI.command_output name
+          UI.command_output(name)
         elsif args[:quiet]
         else
           UI.command name
         end
 
         stdout, err, status = Open3.capture3(joined)
-        UI.user_error! ">> #{name} failed << \n  command: #{joined}\n  error: #{err}" unless status == 0
+        UI.user_error!(">> #{name} failed << \n  command: #{joined}\n  error: #{err}") unless status == 0
         stdout
       end
     end
@@ -85,7 +90,7 @@ module Fastlane
 
     ### Reads the latest version from pubspec.yaml
     def self.current_semver
-      Semantic::Version.new current_version_string
+      Semantic::Version.new(current_version_string)
     end
 
     def self.release_notes(options)
@@ -129,7 +134,7 @@ module Fastlane
         lines = ["## [#{v}]\n", " * #{changes}\n", "\n"] + lines
 
         output = File.new("CHANGELOG.md", "w")
-        lines.each { |line| output.write line }
+        lines.each { |line| output.write(line) }
         output.close
       end
       changes
@@ -142,7 +147,7 @@ module Fastlane
     def self.override_version(**options)
       semver = options[:version]
       unless semver
-        UI.user_error! "No version parameter found"
+        UI.user_error!("No version parameter found")
         return
       end
       self.exec_cmd("set_version", "pubver set #{semver}", quiet: true)
@@ -156,14 +161,16 @@ module Fastlane
                         xcodeproj: "ios/Runner.xcodeproj"
         )
       else
-        UI.user_error! "No version found"
+        Fastlane::Actions::
+        UI.user_error!("No version found")
       end
 
     end
 
-    def self.build_ios(build_num, **options)
+    def self.build_ios(build_ver, build_num, **options)
       flutter = get_flutter(options[:flutter])
-      self.exec_cmd("build flutter ios release #{build_num}", "#{flutter} build ios --release --no-tree-shake-icons --no-codesign --build-number=#{build_num}")
+
+      self.exec_cmd("build flutter ios release #{build_ver} #{build_num}", "#{flutter} build ios --release --no-tree-shake-icons --no-codesign")
     end
 
     ### Reads the latest version from pubspec.yaml

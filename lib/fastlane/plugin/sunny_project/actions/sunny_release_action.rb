@@ -9,7 +9,7 @@ def resort_keys(input)
   keys = []
   input.each_key do |key|
     puts("Key #{key} #{key.class}")
-    keys.push("#{key}")
+    keys.push(key.to_s)
   end
 
   keys = keys.sort
@@ -30,26 +30,35 @@ module Fastlane
         end
 
         sunny_file = Sunny.config(SunnyProject::Options.available_options, {})
-        sunny_file.load_configuration_file("Sunnyfile")
+        sunny_file.load_configuration_file("Sunnyfile", skip_printing_values = true)
 
         app_file = CredentialsManager::AppfileConfig
-        firebase_app_id=sunny_file[:firebase_app_id]
+        firebase_app_id = sunny_file[:firebase_app_id]
         unless firebase_app_id
           UI.user_error!("Missing firebase_app_id.  Set this in Sunnyfile")
         end
 
         old_version = Sunny.current_semver
-        build_number = ''
+        old_version_no_build = "#{old_version.major}.#{old_version.minor}.#{old_version.patch}"
+
+        new_version = ''
+
         ## If we're not going to build, we don't need to update
         # version numbers.
-        if options[:build] and not options[:no_bump]
-          if options[:release]
-            build_number = Sunny.do_increase_version(type: "build", patch: true)
+
+        if (not options[:skip_build]) && (not options[:no_bump])
+          if options[:patch]
+            new_version = Sunny.do_increase_version(type: "patch")
+          elsif options[:minor]
+            new_version = Sunny.do_increase_version(type: "minor")
+          elsif options[:build]
+            new_version = Sunny.do_increase_version(type: "build")
           else
-            build_number = Sunny.do_increase_version(type: "build")
+            UI.user_error!("You must provide the type of version change.  options are minor, patch, build.
+You can also provide no_bump:true to keep the same build number")
           end
 
-          unless build_number
+          unless new_version
             UI.user_error!("Version incrementing failed")
             return
           end
@@ -57,21 +66,34 @@ module Fastlane
 
         # Whatever happened with the incrementing, this is the build number we're
         # going with
-        version = Sunny.current_semver
-        UI.command_output("Build Version: #{version}")
+        version = new_version
+        version_no_build = "#{version.major}.#{version.minor}.#{version.patch}"
+        is_version_changed = old_version_no_build.eql?(version_no_build) != true
+        build_number = version.build
         changes = Sunny.release_notes(options)
-        UI.important('--------------- CHANGELOG ------------------')
-        UI.important(changes)
-        UI.important('--------------------------------------------')
+        app_name = options[:app_name]
+        release_target = options[:release_target]
 
+        puts("")
+        build_summary = [
+          ["App name", (app_file.try_fetch_value(:app_identifier)).to_s],
+          ["Target", app_name],
+          ["Major version", is_version_changed ? "#{old_version_no_build} -> #{version_no_build}" : "#{version_no_build} (no change)"],
+          ["Build number", "#{old_version.build} -> #{build_number}"],
+          ["Releasing to", release_target,],
+          %W[Changelog #{changes}],
+        ]
+        UI.important("\n\n#{Terminal::Table.new(rows: FastlaneCore::PrintTable.transform_output(build_summary),
+                                                title: 'Build Summary')}")
+        puts("")
         # TRY to execute a build.  if it fails, revert the version number changes
         begin
-          if options[:build]
+          unless options[:skip_build]
             if options[:skip_flutter_build]
-              UI.important "Skipping Flutter Build"
+              UI.important("Skipping Flutter Build")
             else
-              UI.header "Run Flutter Build"
-              Sunny.build_ios(build_number)
+              UI.header("Run Flutter Build")
+              Sunny.build_ios(version_no_build, build_number)
             end
             require 'match'
             build_opts = options[:build_options]
@@ -83,16 +105,16 @@ module Fastlane
 
             match_opts.load_configuration_file("Matchfile")
 
-            UI.header "Read Appfile info"
+            UI.header("Read Appfile info")
             # Read the app identifier from Appfile
             app_identifier = app_file.try_fetch_value(:app_identifier)
-            UI.command_output "App: #{app_identifier}"
+            UI.command_output("App: #{app_identifier}")
             unless app_identifier
               UI.user_error!("No app_identifier could be found")
             end
 
             MatchAction.run(match_opts)
-            UI.header "Run Xcode Build"
+            UI.header("Run Xcode Build")
             Sunny.run_action(BuildAppAction, workspace: "ios/Runner.xcworkspace",
                              scheme: "Runner",
                              export_method: build_opts[1],
@@ -101,7 +123,7 @@ module Fastlane
                              clean: options[:clean],
                              export_options: {
                                provisioningProfiles: {
-                                 "#{app_identifier}" => "match #{build_opts[2]} #{app_identifier}",
+                                 app_identifier.to_s => "match #{build_opts[2]} #{app_identifier}",
                                }
                              },
                              output_directory: "build/ios")
@@ -115,28 +137,27 @@ module Fastlane
           return
         end
 
-        app_name = options[:app_name]
         # Commits the version number, deletes changelog file
-        if options[:build] or options[:post_build]
+        if (not options[:skip_build]) || options[:post_build]
           unless options[:skip_symbols]
-            UI.header "Upload Symbols to Crashlytics"
+            UI.header("Upload Symbols to Crashlytics")
             Sunny.run_action(UploadSymbolsToCrashlyticsAction, dsym_path: "./build/ios/#{app_name}.app.dSYM.zip",
                              binary_path: "./ios/Pods/FirebaseCrashlytics/upload-symbols")
           end
 
-          UI.header "Commit pubspec.yaml, Info.plist for version updates"
+          UI.header("Commit pubspec.yaml, Info.plist for version updates")
           # If we got this far, let's commit the build number and update the git tags.  If the rest of the pro
           # process fails, we should revert this because it will mess up our commit logs
           Sunny.run_action(GitCommitAction,
                            allow_nothing_to_commit: true,
-                           path: %w[./pubspec.yaml ./pubspec.lock ./Gemfile.lock ./ios/Runner/Info.plist],
-                           message: "\"Version bump to: #{version.major}.#{version.minor}.#{version.patch}#800#{version.build}\"")
-          UI.header "Tagging repo v#{version.build}"
+                           path: %w[./pubspec.yaml ./pubspec.lock ./ios/Podfile.lock ./Gemfile.lock ./ios/Runner/Info.plist],
+                           message: "\"Version bump to: #{version_no_build}##{build_number}\"")
+          UI.header("Tagging repo v#{version.build}")
           Sunny.run_action(AddGitTagAction,
                            grouping: "sunny-builds",
                            prefix: "v",
                            force: true,
-                           build_number: version.build
+                           build_number: build_number
           )
           Sunny.run_action(PushGitTagsAction, force: false)
         end
@@ -144,10 +165,9 @@ module Fastlane
         unless options[:no_upload]
 
           # platform :ios do
-          release_target = options[:release_target]
+
           if release_target == "firebase"
-            UI.header "Firebase: uploading build/ios/#{app_name}.ipa"
-            #require 'fastlane-plugin-firebase_app_distribution'
+            UI.header("Firebase: uploading build/ios/#{app_name}.ipa")
 
             Sunny.run_action(FirebaseAppDistributionAction,
                              app: firebase_app_id,
@@ -156,7 +176,7 @@ module Fastlane
                              debug: true
             )
           elsif release_target == "testflight"
-            UI.header "Testflight: uploading build/ios/#{app_name}.ipa"
+            UI.header("Testflight: uploading build/ios/#{app_name}.ipa")
             Sunny.run_action(UploadToTestflightAction,
                              ipa: "build/ios/#{app_name}.ipa",
                              localized_build_info: {
@@ -177,7 +197,7 @@ module Fastlane
       end
 
       def self.description
-        "Modify pubspec for local or git development"
+        "Perform ios or firebase release"
       end
 
       def self.authors
@@ -199,25 +219,34 @@ module Fastlane
                                        env_name: "SUNNY_NO_BUMP",
                                        description: "Whether to skip a bump",
                                        optional: true, type: Object),
-          FastlaneCore::ConfigItem.new(key: :build,
-                                       env_name: "SUNNY_BUILD",
-                                       description: "Whether to perform a complete build",
+          FastlaneCore::ConfigItem.new(key: :skip_build,
+                                       env_name: "SUNNY_SKIP_BUILD",
+                                       description: "Whether to skip the building of the project",
                                        optional: true, type: Object),
           FastlaneCore::ConfigItem.new(key: :post_build,
                                        env_name: "SUNNY_POST_BUILD",
-                                       description: "Whether to execute actions after building",
+                                       description: "Whether to execute actions after building. Can be used in conjunction with skip_build to avoid building the entire project, but still applying tags",
                                        optional: true, type: Object),
           FastlaneCore::ConfigItem.new(key: :skip_dirty_check,
                                        env_name: "SUNNY_SKIP_DIRTY_CHECK",
                                        description: "Whether to skip dirty repo check",
                                        optional: true, type: Object),
+
           FastlaneCore::ConfigItem.new(key: :clean,
                                        env_name: "SUNNY_CLEAN",
                                        description: "Whether to do a clean build",
                                        optional: true, type: Object),
-          FastlaneCore::ConfigItem.new(key: :release,
-                                       env_name: "SUNNY_RELEASE",
-                                       description: "Whether to make a release vs patch build",
+          FastlaneCore::ConfigItem.new(key: :minor,
+                                       env_name: "SUNNY_MINOR",
+                                       description: "Whether to make a minor release",
+                                       optional: true, type: Object),
+          FastlaneCore::ConfigItem.new(key: :patch,
+                                       env_name: "SUNNY_PATCH",
+                                       description: "Whether to make a patch release",
+                                       optional: true, type: Object),
+          FastlaneCore::ConfigItem.new(key: :build,
+                                       env_name: "SUNNY_BUILD",
+                                       description: "Whether to increment only the build number for the release",
                                        optional: true, type: Object),
           FastlaneCore::ConfigItem.new(key: :changelog,
                                        env_name: "SUNNY_CHANGELOG",
@@ -236,7 +265,7 @@ module Fastlane
 
           FastlaneCore::ConfigItem.new(key: :release_target,
                                        env_name: "SUNNY_RELEASE_TARGET",
-                                       description: "Where we're releasing to",
+                                       description: "Where we're releasing to, must be either fastlane or testflight",
                                        optional: false,
                                        type: String),
 
@@ -286,7 +315,7 @@ module Fastlane
 
       def visit_Psych_Nodes_Scalar(o)
         if o.value.is_a?(String)
-          str = "#{o.value}"
+          str = (o.value).to_s
           if str.start_with?('^') || str.start_with?('..')
             @handler.scalar(o.value, o.anchor, o.tag, o.plain, o.quoted, 1)
           elsif str.start_with?('https://') || str.start_with?('git@')
