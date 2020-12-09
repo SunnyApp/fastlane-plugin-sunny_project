@@ -161,7 +161,6 @@ module Fastlane
                         xcodeproj: "ios/Runner.xcodeproj"
         )
       else
-        Fastlane::Actions::
         UI.user_error!("No version found")
       end
 
