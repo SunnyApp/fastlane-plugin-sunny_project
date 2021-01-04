@@ -26,20 +26,15 @@ end
 module Fastlane
   module Actions
     class PubspecDoctorAction < Action
-      def self.run(options)
+      def self.run(params)
 
-        params = FastlaneCore::Configuration.create(Fastlane::SunnyProject::Options.available_options, {})
+        unless params
+          params = FastlaneCore::Configuration.create(self.available_options, {})
+        end
         params.load_configuration_file("Sunnyfile")
-        options.all_keys.each do |key|
-          puts("override #{key} => #{options[key]}")
-          params.set(key, options[key])
-        end
-        params.all_keys.each do |k|
-          puts("#{k} => #{params[k]}")
-        end
+        params.load_configuration_file(".Sunnyfile")
 
         plugins = params[:sunny_plugins]
-        branches = params[:sunny_plugins_branches]
         plugin_folder = params[:sunny_plugin_folder]
         pubspec = YAML.load_file("pubspec.yaml")
         local_mode = params[:sunny_local_mode]
@@ -116,7 +111,14 @@ module Fastlane
       end
 
       def self.available_options
-        Fastlane::SunnyProject::Options.available_options
+        opts = [
+
+        ]
+
+        Fastlane::SunnyProject::Options.available_options.each do |option|
+          opts.push(option)
+        end
+        opts
       end
 
       def self.is_supported?(platform)

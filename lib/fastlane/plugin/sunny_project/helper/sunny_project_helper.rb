@@ -144,6 +144,26 @@ module Fastlane
       provided || ".fvm/flutter_sdk/bin/flutter"
     end
 
+    def self.build_runner(options)
+      flutter = get_flutter(options[:flutter])
+      if options[:clean]
+        exec_cmd("Cleaning", "#{flutter} clean")
+      end
+
+      if options[:clean] || (not options[:skip_pubget])
+        exec_cmd("Updating flutter pub", "#{flutter} pub get")
+      end
+
+      if options[:clean] || (not options[:skip_gen])
+        dc = if options[:clean]
+               " --delete-conflicting-outputs"
+             else
+               ""
+             end
+        exec_cmd("Flutter gen#{dc}", "#{flutter} pub run build_runner build#{dc}")
+      end
+    end
+
     def self.override_version(**options)
       semver = options[:version]
       unless semver
