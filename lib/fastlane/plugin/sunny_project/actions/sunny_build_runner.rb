@@ -50,6 +50,11 @@ module Fastlane
                                        description: "Whether to skip generation",
                                        optional: true, type: Object),
 
+          FastlaneCore::ConfigItem.new(key: :verbose,
+                                       env_name: "SUNNY_VERBOSE",
+                                       description: "Verbose or not",
+                                       optional: true, type: Object),
+
         ]
       end
 

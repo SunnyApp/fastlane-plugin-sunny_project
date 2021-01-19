@@ -7,18 +7,23 @@ require_relative '../helper/plugin_options'
 module Fastlane
   UI = FastlaneCore::UI unless Fastlane.const_defined?("UI")
   module Actions
-    class SunnyBuildWeb < Action
+    class SunnyBuildWebAction < Action
       def self.run(options)
-        flutter = Sunny.get_flutter(options)
+        unless options[:skip_build_runner]
+          Sunny.build_runner(options)
+        end
+        flutter = Sunny.get_flutter(options[:flutter])
         profile = if options[:profile]
                     " --profile"
                   else
                     ""
                   end
-        Sunny.exec_cmd("flutter build web", "#{flutter} build web#{profile} --web-renderer #{options[:renderer]}")
+
+        build_cmd = "build web#{profile} --web-renderer #{options[:renderer]}"
+        Sunny.exec_cmd_options("flutter #{build_cmd}", "#{flutter} #{build_cmd}", options)
 
         if options[:deploy]
-          Sunny.exec_cmd("firebase deploy", "firebase deploy")
+          Sunny.exec_cmd_options("firebase deploy", "firebase deploy", options)
         end
       end
 
@@ -41,6 +46,11 @@ module Fastlane
 
       def self.available_options
         [
+          FastlaneCore::ConfigItem.new(key: :skip_build_runner,
+                                       env_name: "SUNNY_SKIP_BUILD_RUNNER",
+                                       description: "Whether to skip the build_runner phase",
+                                       optional: true, type: Object),
+
           FastlaneCore::ConfigItem.new(key: :clean,
                                        env_name: "SUNNY_CLEAN",
                                        description: "Whether to clean",
@@ -75,6 +85,12 @@ module Fastlane
           FastlaneCore::ConfigItem.new(key: :deploy,
                                        env_name: "SUNNY_DEPLOY",
                                        description: "Whether to deploy to firebase",
+                                       optional: true,
+                                       type: Object),
+
+          FastlaneCore::ConfigItem.new(key: :verbose,
+                                       env_name: "SUNNY_VERBOSE",
+                                       description: "Whether to show verbose output",
                                        optional: true,
                                        type: Object),
 

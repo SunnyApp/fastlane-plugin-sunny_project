@@ -1,4 +1,5 @@
 require 'fastlane_core/ui/ui'
+require 'fastlane/helper/sh_helper'
 require "fastlane"
 
 module Fastlane
@@ -59,14 +60,22 @@ module Fastlane
       self.current_semver
     end
 
+    def self.config_to_hash(options)
+      hash = Hash([])
+      options.all_keys.each do |key|
+        hash.store(key, options.fetch(key, ask: false))
+      end
+      return hash
+    end
+
     def self.exec_cmd(name, *command, **args)
-      if (command.count > 1)
+      if command.count > 1
         command = command.map { |item| Shellwords.escape(item) }
       end
       joined = command.join(" ")
       if args[:verbose]
         begin
-          return sh(command)
+          return Fastlane::Actions.sh(*command, log:true, error_callback: ->(str) { UI.user_error!(">> #{name} failed << \n #{str}") })
         rescue StandardError => e
           UI.user_error!(">> #{name} failed << \n  #{e}")
         end
@@ -82,6 +91,10 @@ module Fastlane
         UI.user_error!(">> #{name} failed << \n  command: #{joined}\n  error: #{err}") unless status == 0
         stdout
       end
+    end
+
+    def self.exec_cmd_options(name, command, options)
+      return exec_cmd(name, command, **config_to_hash(options))
     end
 
     def self.release_notes_file
@@ -146,21 +159,27 @@ module Fastlane
 
     def self.build_runner(options)
       flutter = get_flutter(options[:flutter])
+      opt_hash = config_to_hash(options)
       if options[:clean]
-        exec_cmd("Cleaning", "#{flutter} clean")
+        exec_cmd("flutter clean", "#{flutter} clean", **opt_hash)
       end
 
-      if options[:clean] || (not options[:skip_pubget])
-        exec_cmd("Updating flutter pub", "#{flutter} pub get")
+      if options[:clean] || (!options[:skip_pub])
+        exec_cmd("flutter pub get", "#{flutter} pub get", **opt_hash)
       end
 
-      if options[:clean] || (not options[:skip_gen])
+      if options[:clean] || (!options[:skip_gen])
         dc = if options[:clean]
                " --delete-conflicting-outputs"
              else
                ""
              end
-        exec_cmd("Flutter gen#{dc}", "#{flutter} pub run build_runner build#{dc}")
+        vb = if options[:verbose]
+               " -v"
+             else
+               ""
+             end
+        exec_cmd("flutter pub run build_runner build#{dc}#{vb}", "#{flutter} pub run build_runner build#{dc}#{vb}", **opt_hash)
       end
     end
 
@@ -179,7 +198,7 @@ module Fastlane
         self.run_action(Fastlane::Actions::IncrementVersionNumberAction,
                         version_number: "#{version.major}.#{version.minor}.#{version.patch}",
                         xcodeproj: "ios/Runner.xcodeproj"
-        )
+                       )
       else
         UI.user_error!("No version found")
       end
