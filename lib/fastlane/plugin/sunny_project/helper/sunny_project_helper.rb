@@ -106,6 +106,26 @@ module Fastlane
       Semantic::Version.new(current_version_string)
     end
 
+    def self.finalize_version(options)
+      version = self.current_semver
+      # If we got this far, let's commit the build number and update the git tags.  If the rest of the pro
+      # process fails, we should revert this because it will mess up our commit logs
+      self.run_action(Fastlane::Actions::GitAddAction, path: %w[./pubspec.yaml ./pubspec.lock ./CHANGELOG.md])
+      self.run_action(Fastlane::Actions::GitCommitAction, path: %w[./pubspec.yaml ./pubspec.lock ./CHANGELOG.md],
+                       allow_nothing_to_commit: false,
+
+                       message: "Version bump to: #{version.major}.#{version.minor}.#{version.patch}#800#{version.build}")
+      self.run_action(Fastlane::Actions::AddGitTagAction,
+                       tag: "sunny/builds/v#{version.build}",
+                       force: true,
+                       sign: false,
+                       )
+      self.run_action(Fastlane::Actions::PushGitTagsAction, force: true)
+      if File.exist?(self.release_notes_file)
+        File.delete(self.release_notes_file)
+      end
+    end
+
     def self.release_notes(options)
       changes = Sunny.string(options[:changelog])
       if Sunny.blank(changes)

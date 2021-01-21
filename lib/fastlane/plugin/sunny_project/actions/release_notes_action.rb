@@ -8,7 +8,7 @@ module Fastlane
 
     class ReleaseNotesAction < Action
       def self.run(options)
-
+        Sunny.release_notes(options)
       end
 
       def self.description
@@ -30,7 +30,7 @@ module Fastlane
 
       def self.available_options
         [
-            FastlaneCore::ConfigItem.new(key: :changes,
+            FastlaneCore::ConfigItem.new(key: :changelog,
                                          env_name: "SUNNY_PROJECT_CHANGES",
                                          description: "Change log text",
                                          optional: true,

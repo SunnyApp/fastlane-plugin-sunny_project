@@ -5,21 +5,7 @@ module Fastlane
   module Actions
     class FinalizeVersionAction < Action
       def self.run(options)
-        version = Sunny.current_semver
-        # If we got this far, let's commit the build number and update the git tags.  If the rest of the pro
-        # process fails, we should revert this because it will mess up our commit logs
-        Sunny.run_action(GitCommitAction, path: %w[./pubspec.yaml ./pubspec.lock ./CHANGELOG.md],
-                         allow_nothing_to_commit: true,
-                         message: "Version bump to: #{version.major}.#{version.minor}.#{version.patch}#800#{version.build}")
-        Sunny.run_action(AddGitTagAction,
-                         tag: "sunny/builds/v#{version.build}",
-                         force: true,
-                         sign: false,
-        )
-        Sunny.run_action(PushGitTagsAction, force: true)
-        if File.exist?(Sunny.release_notes_file)
-          File.delete(Sunny.release_notes_file)
-        end
+        Sunny.finalize_version(options)
       end
 
       def self.description
@@ -40,15 +26,15 @@ module Fastlane
       end
 
       def self.available_options
-        [
+         [
           FastlaneCore::ConfigItem.new(key: :tag_group,
                                        env_name: "SUNNY_PROJECT_TAG_GROUP",
                                        description: "The name of the tag group",
                                        optional: false,
                                        type: String,
                                        default_value: "sunny/builds"),
+                     ]
 
-        ]
       end
 
       def self.is_supported?(platform)
