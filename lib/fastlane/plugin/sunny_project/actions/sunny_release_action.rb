@@ -49,10 +49,13 @@ module Fastlane
         if (not options[:skip_build]) && (not options[:no_bump])
           if options[:patch]
             new_version = Sunny.do_increase_version(type: "patch")
+            Sunny.update_ios_project_version(new_version)
           elsif options[:minor]
             new_version = Sunny.do_increase_version(type: "minor")
+            Sunny.update_ios_project_version(new_version)
           elsif options[:build]
             new_version = Sunny.do_increase_version(type: "build")
+            Sunny.update_ios_project_version(new_version)
           else
             UI.user_error!("You must provide the type of version change.  options are minor, patch, build.
 You can also provide no_bump:true to keep the same build number")
@@ -63,6 +66,8 @@ You can also provide no_bump:true to keep the same build number")
             return
           end
         end
+
+
 
         # Whatever happened with the incrementing, this is the build number we're
         # going with

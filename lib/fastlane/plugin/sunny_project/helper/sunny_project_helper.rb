@@ -44,6 +44,10 @@ module Fastlane
       action.run(self.config(action.available_options, options))
     end
 
+    def self.mmp(semver)
+      "#{semver.major}.#{semver.minor}.#{semver.patch}"
+    end
+
     def self.do_increase_version(options)
       bump_type = options[:type]
       bump_type = "build" unless bump_type
@@ -58,6 +62,14 @@ module Fastlane
       end
 
       self.current_semver
+    end
+
+    def self.update_ios_project_version(new_version)
+      Dir.chdir("ios") {
+        puts("Updating XCode Project files: version:#{mmp(new_version)}, build: #{new_version.build}")
+        self.run_action(Fastlane::Actions::IncrementVersionNumberAction, version_number: mmp(new_version))
+        self.run_action(Fastlane::Actions::IncrementBuildNumberAction, build_number: new_version.build)
+      }
     end
 
     def self.config_to_hash(options)
