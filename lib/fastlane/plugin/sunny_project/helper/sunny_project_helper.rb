@@ -49,18 +49,34 @@ module Fastlane
     end
 
     def self.do_increase_version(options)
-      bump_type = options[:type]
-      bump_type = "build" unless bump_type
-      command = "pubver bump #{bump_type}"
-      unless bump_type.eql?('build')
-        command += " -b"
-      end
-      self.exec_cmd(command.to_s, command)
+      curr = self.current_semver
 
-      unless bump_type.eql?('build')
-        self.exec_cmd("also bump build", "pubver bump build")
-      end
+      if curr.pre
+        me = curr.pre
+        pos = me.rindex(".")
+        pre_id = me[0...pos]
+        pre_num = me[pos + 1..-1]
+        curr.pre = "#{pre_id}.#{Integer(pre_num) + 1}"
+        self.exec_cmd("pubver set #{curr}", "pubver set #{curr}")
+      else
+        bump_type = options[:type]
+        bump_type = "build" unless bump_type
+        if bump_type.eql?('build')
+        elsif bump_type.eql?('patch')
+        elsif bump_type.eql?('minor')
+        elsif bump_type.eql?('major')
+        end
 
+        command = "pubver bump #{bump_type}"
+        unless bump_type.eql?('build')
+          command += " -b"
+        end
+        self.exec_cmd(command.to_s, command)
+
+        unless bump_type.eql?('build')
+          self.exec_cmd("also bump build", "pubver bump build")
+        end
+      end
       self.current_semver
     end
 
@@ -87,7 +103,7 @@ module Fastlane
       joined = command.join(" ")
       if args[:verbose]
         begin
-          return Fastlane::Actions.sh(*command, log:true, error_callback: ->(str) { UI.user_error!(">> #{name} failed << \n #{str}") })
+          return Fastlane::Actions.sh(*command, log: true, error_callback: ->(str) { UI.user_error!(">> #{name} failed << \n #{str}") })
         rescue StandardError => e
           UI.user_error!(">> #{name} failed << \n  #{e}")
         end
@@ -124,14 +140,14 @@ module Fastlane
       # process fails, we should revert this because it will mess up our commit logs
       self.run_action(Fastlane::Actions::GitAddAction, path: %w[./pubspec.yaml ./pubspec.lock ./CHANGELOG.md])
       self.run_action(Fastlane::Actions::GitCommitAction, path: %w[./pubspec.yaml ./pubspec.lock ./CHANGELOG.md],
-                       allow_nothing_to_commit: false,
+                      allow_nothing_to_commit: false,
 
-                       message: "Version bump to: #{version.major}.#{version.minor}.#{version.patch}#800#{version.build}")
+                      message: "Version bump to: #{version.major}.#{version.minor}.#{version.patch}#800#{version.build}")
       self.run_action(Fastlane::Actions::AddGitTagAction,
-                       tag: "sunny/builds/v#{version.build}",
-                       force: true,
-                       sign: false,
-                       )
+                      tag: "sunny/builds/v#{version.build}",
+                      force: true,
+                      sign: false,
+      )
       self.run_action(Fastlane::Actions::PushGitTagsAction, force: true)
       if File.exist?(self.release_notes_file)
         File.delete(self.release_notes_file)
@@ -230,7 +246,7 @@ module Fastlane
         self.run_action(Fastlane::Actions::IncrementVersionNumberAction,
                         version_number: "#{version.major}.#{version.minor}.#{version.patch}",
                         xcodeproj: "ios/Runner.xcodeproj"
-                       )
+        )
       else
         UI.user_error!("No version found")
       end
