@@ -202,7 +202,7 @@ module Fastlane
     end
 
     def self.get_flutter(provided = nil)
-      provided || ".fvm/flutter_sdk/bin/flutter"
+      provided || "~/fvm/versions/current/bin/flutter"
     end
 
     def self.build_runner(options)
@@ -253,10 +253,13 @@ module Fastlane
 
     end
 
-    def self.build_ios(build_ver, build_num, **options)
+    def self.build_ios(build_ver, build_num, sksl_path, **options)
       flutter = get_flutter(options[:flutter])
-
-      self.exec_cmd("build flutter ios release #{build_ver} #{build_num}", "#{flutter} build ios --release --no-tree-shake-icons --no-codesign")
+      command = "#{flutter} build ios --release --no-tree-shake-icons --no-codesign"
+      if sksl_path
+        command = "#{command} --bundle-sksl-path #{sksl_path}"
+      end
+      self.exec_cmd("build flutter ios release #{build_ver} #{build_num} #{sksl_path}", command)
     end
 
     ### Reads the latest version from pubspec.yaml

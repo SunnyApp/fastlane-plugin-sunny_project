@@ -41,7 +41,7 @@ module Fastlane
         old_version = Sunny.current_semver
         old_version_no_build = "#{old_version.major}.#{old_version.minor}.#{old_version.patch}"
 
-        new_version = ''
+        new_version = old_version
 
         ## If we're not going to build, we don't need to update
         # version numbers.
@@ -66,8 +66,6 @@ You can also provide no_bump:true to keep the same build number")
             return
           end
         end
-
-
 
         # Whatever happened with the incrementing, this is the build number we're
         # going with
@@ -97,8 +95,13 @@ You can also provide no_bump:true to keep the same build number")
             if options[:skip_flutter_build]
               UI.important("Skipping Flutter Build")
             else
-              UI.header("Run Flutter Build")
-              Sunny.build_ios(version_no_build, build_number)
+              sksl_path = options[:sksl_path]
+              if sksl_path
+                UI.header("Run Flutter Build (with sksl #{sksl_path}")
+              else
+                UI.header("Run Flutter Build")
+              end
+              Sunny.build_ios(version_no_build, build_number, sksl_path)
             end
             require 'match'
             build_opts = options[:build_options]
@@ -178,6 +181,7 @@ You can also provide no_bump:true to keep the same build number")
                              app: firebase_app_id,
                              ipa_path: "build/ios/#{app_name}.ipa",
                              release_notes: changes,
+                             groups: "playerrank-testers",
                              debug: true
             )
           elsif release_target == "testflight"
@@ -228,6 +232,10 @@ You can also provide no_bump:true to keep the same build number")
                                        env_name: "SUNNY_SKIP_BUILD",
                                        description: "Whether to skip the building of the project",
                                        optional: true, type: Object),
+          FastlaneCore::ConfigItem.new(key: :sksl_path,
+                                                 env_name: "SUNNY_SKSL_PATH",
+                                                 description: "Shader warmup path",
+                                                 optional: true, type: Object),
           FastlaneCore::ConfigItem.new(key: :post_build,
                                        env_name: "SUNNY_POST_BUILD",
                                        description: "Whether to execute actions after building. Can be used in conjunction with skip_build to avoid building the entire project, but still applying tags",
